@@ -1,0 +1,44 @@
+---
+title: "Correlations"
+author: "Francisko de Moraes Rezende"
+date: "3/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Running correlations for Gui
+
+## Setup
+
+### Loading packages
+
+```{r}
+list_of_packages <- c("tidyverse", "readxl", "here")
+new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
+if(length(new_packages)) install.packages(new_packages)
+
+library(tidyverse)
+library(readxl)
+library(here)
+```
+
+### Loading data
+
+```{r}
+data_path <- 
+  here::here("data")
+
+
+files <- 
+  dir(path = data_path,
+      pattern = "*.xls|*.xlsx")
+
+adsorbed_particles <-
+files %>% 
+  purrr::map(~ readxl::read_excel(file.path(data_path, .)))
+```
+
+
