@@ -40,8 +40,8 @@ adsorbed_particles <-
 files %>% 
   purrr::map(~ readxl::read_excel(file.path(data_path, .))) %>%
   purrr::set_names(nm = c("particle_count",
-                          "macrorugosity",
-                          "microrugosity",
+                          "macro",
+                          "micro",
                           "wetability",
                           "celular_perimeter",
                           "ui"
@@ -53,8 +53,50 @@ files %>%
 ```{r}
 adsorbed_particles %>% 
   purrr::pluck("particle_count") %>% 
-  dplyr::rename(sp = Espécie,
+  dplyr::rename(sp = Sp,
                 face = Face,
-                frag = Fragmento) -> adsorbed_particles$particle_count
+                frag = Frag,
+                site = Site) %>% 
+  dplyr::mutate(
+    site = dplyr::case_when(
+    site == "BR" ~ 1,
+    site == "CA" ~ 2,
+    site == "VZ" ~ 3,
+    site == "CN" ~ 4,
+    site == "REF" ~ 5),
+    `<2.5` = as.numeric(`<2.5`),
+    `2.5-10` = as.numeric(`2.5-10`),
+    `10-100` = as.numeric(`10-100`),
+    total = `<2.5` + `2.5-10` + `10-100`) -> adsorbed_particles$particle_count
 ```
 
+```{r}
+adsorbed_particles %>%
+  purrr::pluck("particle_count") %>%
+  dplyr::group_by(site, sp, Rep, face) %>%
+  dplyr::summarise(
+    `<2.5` = mean(`<2.5`),
+    `2.5-10` = mean(`2.5-10`),
+    `10-100` = mean(`10-100`),
+    total = mean(total)
+  ) %>%
+  dplyr::ungroup() -> adsorbed_particles$particle_count_micro
+```
+
+```{r}
+adsorbed_particles %>% 
+  purrr::pluck("micro") %>% 
+  dplyr::rename(ind = rep) -> adsorbed_particles$micro
+```
+
+```{r}
+adsorbed_particles %>% 
+  purrr::pluck("macro") %>% 
+  dplyr::select(-Rq) -> adsorbed_particles$macro
+```
+
+```{r}
+adsorbed_particles %>% 
+  purrr::pluck("micro") %>% 
+  dplyr::select(-Sq) -> adsorbed_particles$micro
+```
