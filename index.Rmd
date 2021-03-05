@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Loading packages
 
-```{r}
+```{r loading-pkgs}
 list_of_packages <- c("tidyverse", "readxl", "here")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
@@ -27,7 +27,7 @@ library(here)
 
 ### Loading data
 
-```{r}
+```{r loading-data}
 data_path <- 
   here::here("data")
 
@@ -38,7 +38,23 @@ files <-
 
 adsorbed_particles <-
 files %>% 
-  purrr::map(~ readxl::read_excel(file.path(data_path, .)))
+  purrr::map(~ readxl::read_excel(file.path(data_path, .))) %>%
+  purrr::set_names(nm = c("particle_count",
+                          "macrorugosity",
+                          "microrugosity",
+                          "wetability",
+                          "celular_perimeter",
+                          "ui"
+                          ))
 ```
 
+### Standardising the sheets
+
+```{r}
+adsorbed_particles %>% 
+  purrr::pluck("particle_count") %>% 
+  dplyr::rename(sp = Espécie,
+                face = Face,
+                frag = Fragmento) -> adsorbed_particles$particle_count
+```
 
