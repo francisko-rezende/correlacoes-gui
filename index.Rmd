@@ -16,13 +16,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Loading packages
 
 ```{r loading-pkgs}
-list_of_packages <- c("tidyverse", "readxl", "here")
+list_of_packages <- c("tidyverse", "readxl", "here", "correlation")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
 
 library(tidyverse)
 library(readxl)
 library(here)
+library(correlation)
 ```
 
 ### Loading data
@@ -99,4 +100,67 @@ adsorbed_particles %>%
 adsorbed_particles %>% 
   purrr::pluck("micro") %>% 
   dplyr::select(-Sq) -> adsorbed_particles$micro
+```
+
+
+### Combining sheets
+
+#### Combining microroughness sheets
+
+```{r} 
+adsorbed_particles %>% 
+  purrr::keep(stringr::str_detect(names(.), pattern = "micro")) %>% 
+  purrr::reduce(left_join) %>% 
+  dplyr::rename(rep = Rep) -> micro_combined
+```
+
+#### Combining all vars but microroughness
+
+```{r}
+adsorbed_particles %>% 
+  purrr::discard(stringr::str_detect(names(.), pattern = "micro")) %>% 
+  purrr::reduce(left_join) -> all_but_micro_combined
+```
+## Analyses
+
+### Defining functions I used
+
+Since there's load of repetition in these analyses, I defined functions to make maintaining the code easier.
+
+The folowing function calculates the pearson correlation between `leaf_char` and `part_size` for a given dataset (`dat`).
+
+```{r}
+calculates_correlation <- function(dat, leaf_char, part_size) {
+
+  common_vars <- c("sp", "site", "face", "rep")
+  
+  dat %>% 
+    select(all_of(common_vars), {{leaf_char}}, {{part_size}}) %>% 
+    group_by(site, sp, face, rep)  %>%
+    summarise(mean({{leaf_char}}), mean({{part_size}})) %>% 
+    ungroup() %>% 
+    correlation()
+}
+```
+
+
+### Microroughness
+
+#### Correcting microroughness sheet
+
+I forgot to change `sp`, `site`, `face` and `rep` to factors so I'll do it now:
+
+```{r}
+micro_combined %>% 
+  mutate(sp = as.factor(sp),
+         site = as.factor(site),
+         face = as.factor(face),
+         rep = as.factor(rep)) -> micro_combined
+```
+
+
+#### Correlation
+
+```{r}
+calculates_correlation(micro_combined, Sa, `<2.5`)
 ```
