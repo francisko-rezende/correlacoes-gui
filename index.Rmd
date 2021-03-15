@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Loading packages
 
 ```{r loading-pkgs}
-list_of_packages <- c("tidyverse", "readxl", "here", "correlation")
+list_of_packages <- c("tidyverse", "readxl", "here", "correlation", "ggstatsplot")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
 
@@ -27,6 +27,7 @@ library(tidyverse)
 library(readxl)
 library(here)
 library(correlation)
+library(ggstatsplot)
 ```
 
 ### Loading data
@@ -123,7 +124,8 @@ adsorbed_particles %>%
 ```{r}
 adsorbed_particles %>% 
   purrr::discard(stringr::str_detect(names(.), pattern = "micro")) %>% 
-  purrr::reduce(left_join) -> all_but_micro_combined
+  purrr::reduce(left_join) %>% 
+  dplyr::rename(rep = Rep) -> all_but_micro_combined
 ```
 ## Analyses
 
@@ -161,6 +163,23 @@ plots_scatterplot <- function(dat, leaf_char, part_size) {
 }
 ```
 
+<!-- ```{r} -->
+<!-- plots_statsplot <- function(dat, leaf_char, part_size) { -->
+
+<!--   common_vars <- c("sp", "site", "face", "rep") -->
+
+<!--   dat %>%  -->
+<!--     select(all_of(common_vars), {{leaf_char}}, {{part_size}}) %>%  -->
+<!--     group_by(site, sp, face, rep)  %>% -->
+<!--     summarise(mean_char = mean({{leaf_char}}), mean_part = mean({{part_size}})) %>%  -->
+<!--   ggstatsplot::ggscatterstats( -->
+<!--     data = ., -->
+<!--     x = {{leaf_char}}, -->
+<!--     y = {{part_size}} -->
+<!--   ) -->
+<!-- } -->
+<!-- ``` -->
+
 
 ### Microroughness
 
@@ -191,6 +210,11 @@ plots_scatterplot(micro_combined, Sa, `<2.5`) +
   labs(y = "Number of adsorbed particles (<2.5)",
        x = "Sa")
 ```
+
+```{r}
+plots_statsplot(micro_combined, Sa, `<2.5`)
+```
+
 
 
 #### 2.5 - 10
@@ -239,6 +263,9 @@ calculates_correlation(micro_combined, Sa, total)
 ```
 ##### Plot
 
+
+
+
 ```{r}
 plots_scatterplot(micro_combined, Sa, total) +
   labs(
@@ -247,11 +274,73 @@ plots_scatterplot(micro_combined, Sa, total) +
   )
 ```
 
+#### Correcting all vars but microroughness sheet
+
+```{r}
+common_vars <- c("sp", "site", "face", "rep")
+
+all_but_micro_combined %>%
+  dplyr::mutate(across(.cols = all_of(common_vars), .fns = forcats::as_factor)) -> all_but_micro_combined
+```
+
 ### Macroroughness
 
 #### <2.5
 
 ##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Ra, `<2.5`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Ra, `<2.5`)
+```
+
+#### 2.5 - 10
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Ra, `2.5-10`)
+```
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Ra, `2.5-10`)
+```
+
+#### 10 - 100
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Ra, `10-100`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Ra, `10-100`)
+```
+
+#### Total
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Ra, total)
+```
+
+##### Plot 
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Ra, total)
+```
+
+
 
 
 <!-- ```{r} -->
@@ -300,8 +389,3 @@ plots_scatterplot(micro_combined, Sa, total) +
 <!--     ggplot2::ggplot(., aes(x = mean_sa, y = mean_particle)) + -->
 <!--     ggplot2::geom_point() -->
 <!-- ``` -->
-
-```{r}
-2 * 130 + 2 * 260 + 2 * 350
-```
-
