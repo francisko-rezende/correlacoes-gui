@@ -2,7 +2,10 @@
 title: "Correlations"
 author: "Francisko de Moraes Rezende"
 date: "3/4/2021"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -84,6 +87,7 @@ adsorbed_particles %>%
   dplyr::ungroup() -> adsorbed_particles$particle_count_micro
 ```
 
+
 ```{r}
 adsorbed_particles %>% 
   purrr::pluck("micro") %>% 
@@ -127,7 +131,7 @@ adsorbed_particles %>%
 
 Since there's load of repetition in these analyses, I defined functions to make maintaining the code easier.
 
-The folowing function calculates the pearson correlation between `leaf_char` and `part_size` for a given dataset (`dat`).
+The following function calculates the pearson correlation between `leaf_char` and `part_size` for a given dataset (`dat`).
 
 ```{r}
 calculates_correlation <- function(dat, leaf_char, part_size) {
@@ -143,6 +147,20 @@ calculates_correlation <- function(dat, leaf_char, part_size) {
 }
 ```
 
+```{r}
+plots_scatterplot <- function(dat, leaf_char, part_size) {
+
+  common_vars <- c("sp", "site", "face", "rep")
+  
+  dat %>% 
+    select(all_of(common_vars), {{leaf_char}}, {{part_size}}) %>% 
+    group_by(site, sp, face, rep)  %>%
+    summarise(mean_char = mean({{leaf_char}}), mean_part = mean({{part_size}})) %>% 
+    ggplot2::ggplot(., aes(x = mean_char, y = mean_part)) +
+    ggplot2::geom_point(alpha = 0.7)
+}
+```
+
 
 ### Microroughness
 
@@ -151,16 +169,139 @@ calculates_correlation <- function(dat, leaf_char, part_size) {
 I forgot to change `sp`, `site`, `face` and `rep` to factors so I'll do it now:
 
 ```{r}
-micro_combined %>% 
-  mutate(sp = as.factor(sp),
-         site = as.factor(site),
-         face = as.factor(face),
-         rep = as.factor(rep)) -> micro_combined
+common_vars <- c("sp", "site", "face", "rep")
+
+micro_combined %>%
+  dplyr::mutate(across(.cols = all_of(common_vars), .fns = forcats::as_factor)) -> micro_combined
 ```
 
+#### < 2.5
 
-#### Correlation
+##### Correlation
 
 ```{r}
 calculates_correlation(micro_combined, Sa, `<2.5`)
 ```
+
+
+##### Plot
+
+```{r}
+plots_scatterplot(micro_combined, Sa, `<2.5`) +
+  labs(y = "Number of adsorbed particles (<2.5)",
+       x = "Sa")
+```
+
+
+#### 2.5 - 10
+
+##### Correlation
+
+```{r}
+calculates_correlation(micro_combined, Sa, `2.5-10`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(micro_combined, Sa, `2.5-10`) +
+  labs(
+    x = "Sa",
+    y = "Number of adsorbed particles (2.5 - 10)"
+  )
+```
+
+
+#### 10 - 100
+
+##### Correlation
+
+```{r}
+calculates_correlation(micro_combined, Sa, `10-100`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(micro_combined, Sa, `10-100`) +
+  labs(
+    x = "Sa",
+    y = "Number of adsorbed particles (10-100)"
+  )
+```
+
+#### Total
+
+##### Correlation
+
+```{r}
+calculates_correlation(micro_combined, Sa, total)
+```
+##### Plot
+
+```{r}
+plots_scatterplot(micro_combined, Sa, total) +
+  labs(
+    x = "Sa",
+    y = "Total number of Adsorbed particles"
+  )
+```
+
+### Macroroughness
+
+#### <2.5
+
+##### Correlation
+
+
+<!-- ```{r} -->
+<!-- micro_combined %>%  -->
+<!--   select(common_vars, Sa, `<2.5`) %>%  -->
+<!--   group_by(site, sp, face, rep) %>% -->
+<!--   summarise(mean_sa =mean(Sa), mean_part = mean(`<2.5`)) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- adsorbed_particles %>%  -->
+<!--   pluck("particle_count_micro") %>%  -->
+<!--   mutate(across(.cols = all_of(c("sp", "face", "site", "Rep")), as_factor)) %>% -->
+<!--   summary() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- adsorbed_particles %>%  -->
+<!--   pluck("micro") %>%  -->
+<!--   mutate(across(all_of(c("sp", "ind", "frag", "face")), as.factor)) %>%  -->
+<!--   summary() -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- adsorbed_particles %>%  -->
+<!--   pluck("particle_count") %>%  -->
+<!--   mutate(across(.cols = all_of(c("sp", "face", "site", "frag", "Rep")), as_factor)) %>%  -->
+<!--   summary() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- adsorbed_particles %>%  -->
+<!--   pluck("macro") %>%  -->
+<!--   mutate(across(all_of(c("sp", "ind", "frag", "face")), as.factor)) %>%  -->
+<!--   summary() -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- common_vars <- c("sp", "site", "face", "rep") -->
+
+<!--   micro_combined %>%  -->
+<!--     select(all_of(common_vars), Sa, `<2.5`) %>%  -->
+<!--     group_by(site, sp, face, rep)  %>% -->
+<!--     summarise(mean_sa = mean(Sa), mean_particle = mean(`<2.5`)) %>%  -->
+<!--     ggplot2::ggplot(., aes(x = mean_sa, y = mean_particle)) + -->
+<!--     ggplot2::geom_point() -->
+<!-- ``` -->
+
+```{r}
+2 * 130 + 2 * 260 + 2 * 350
+```
+
