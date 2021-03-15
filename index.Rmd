@@ -211,10 +211,6 @@ plots_scatterplot(micro_combined, Sa, `<2.5`) +
        x = "Sa")
 ```
 
-```{r}
-plots_statsplot(micro_combined, Sa, `<2.5`)
-```
-
 
 
 #### 2.5 - 10
@@ -340,6 +336,183 @@ calculates_correlation(all_but_micro_combined, Ra, total)
 plots_scatterplot(all_but_micro_combined, Ra, total)
 ```
 
+### Wetability
+
+#### <2.5
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Angle, `<2.5`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Angle, `<2.5`)
+```
+
+
+#### 2.5 - 10
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Angle, `2.5-10`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Angle, `2.5-10`)
+```
+
+#### 10 - 100
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Angle, `10-100`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Angle, `10-100`)
+```
+
+#### Total
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Angle, total)
+```
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Angle, total)
+```
+
+### Perimeter
+
+#### <2.5
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Perimeter, `<2.5`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Perimeter, `<2.5`)
+```
+
+#### 2.5 - 10
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Perimeter, `2.5-10`)
+```
+
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Perimeter, `2.5-10`)
+```
+
+
+#### 10 - 100
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Perimeter, `10-100`)
+```
+
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Perimeter, `10-100`)
+```
+
+
+#### Total
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, Perimeter, total)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, Perimeter, total)
+```
+
+### UI
+
+#### <2.5
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, UI, `<2.5`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, UI, `<2.5`)
+```
+
+#### 2.5 - 10
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, UI, `2.5-10`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, UI, `2.5-10`)
+```
+
+#### 10 - 100
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, UI, `10-100`)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, UI, `10-100`)
+```
+
+
+#### Total
+
+##### Correlation
+
+```{r}
+calculates_correlation(all_but_micro_combined, UI, total)
+```
+
+##### Plot
+
+```{r}
+plots_scatterplot(all_but_micro_combined, UI, total)
+```
 
 
 
