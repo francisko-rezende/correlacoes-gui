@@ -9,7 +9,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, dpi = 400)
 ```
 
 # Running correlations for Gui
@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Loading packages
 
 ```{r loading-pkgs}
-list_of_packages <- c("tidyverse", "readxl", "here", "correlation", "ggstatsplot")
+list_of_packages <- c("tidyverse", "readxl", "here", "correlation", "DT")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
 
@@ -27,7 +27,7 @@ library(tidyverse)
 library(readxl)
 library(here)
 library(correlation)
-library(ggstatsplot)
+library(DT)
 ```
 
 ### Loading data
@@ -118,6 +118,17 @@ adsorbed_particles %>%
   purrr::reduce(left_join) %>% 
   dplyr::rename(rep = Rep) -> micro_combined
 ```
+#### Correcting microroughness sheet
+
+I forgot to change `sp`, `site`, `face` and `rep` to factors so I'll do it now:
+
+```{r}
+common_vars <- c("sp", "site", "face", "rep")
+
+micro_combined %>%
+  dplyr::mutate(across(.cols = all_of(common_vars), .fns = forcats::as_factor)) -> micro_combined
+```
+
 
 #### Combining all vars but microroughness
 
@@ -127,6 +138,49 @@ adsorbed_particles %>%
   purrr::reduce(left_join) %>% 
   dplyr::rename(rep = Rep) -> all_but_micro_combined
 ```
+
+#### Correcting all vars but microroughness sheet
+
+I forgot to change `sp`, `site`, `face` and `rep` to factors so I'll do it now:
+
+```{r}
+all_but_micro_combined %>%
+  dplyr::mutate(across(.cols = all_of(common_vars), .fns = forcats::as_factor)) -> all_but_micro_combined
+```
+
+## Making sheets available
+
+### Microroughness
+
+```{r}
+micro_combined %>%
+  DT::datatable(
+    extensions = 'Buttons',
+    options = list(
+      dom = 'Blfrtip',
+      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+      lengthMenu = list(c(10, 25, 50, -1),
+                        c(10, 25, 50, "All"))
+    )
+  )
+```
+
+
+```{r}
+all_but_micro_combined %>%
+  DT::datatable(
+    extensions = 'Buttons',
+    options = list(
+      dom = 'Blfrtip',
+      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+      lengthMenu = list(c(10, 25, 50, -1),
+                        c(10, 25, 50, "All"))
+    )
+  )
+```
+
+### All but Microuroughness
+
 ## Analyses
 
 ### Defining functions I used
@@ -159,7 +213,9 @@ plots_scatterplot <- function(dat, leaf_char, part_size) {
     group_by(site, sp, face, rep)  %>%
     summarise(mean_char = mean({{leaf_char}}), mean_part = mean({{part_size}})) %>% 
     ggplot2::ggplot(., aes(x = mean_char, y = mean_part)) +
-    ggplot2::geom_point(alpha = 0.7)
+    ggplot2::geom_point(alpha = 0.7) +
+    ggplot2::geom_smooth(method = "lm",
+                         se = F)
 }
 ```
 
@@ -182,17 +238,6 @@ plots_scatterplot <- function(dat, leaf_char, part_size) {
 
 
 ### Microroughness
-
-#### Correcting microroughness sheet
-
-I forgot to change `sp`, `site`, `face` and `rep` to factors so I'll do it now:
-
-```{r}
-common_vars <- c("sp", "site", "face", "rep")
-
-micro_combined %>%
-  dplyr::mutate(across(.cols = all_of(common_vars), .fns = forcats::as_factor)) -> micro_combined
-```
 
 #### < 2.5
 
@@ -259,9 +304,6 @@ calculates_correlation(micro_combined, Sa, total)
 ```
 ##### Plot
 
-
-
-
 ```{r}
 plots_scatterplot(micro_combined, Sa, total) +
   labs(
@@ -270,14 +312,7 @@ plots_scatterplot(micro_combined, Sa, total) +
   )
 ```
 
-#### Correcting all vars but microroughness sheet
 
-```{r}
-common_vars <- c("sp", "site", "face", "rep")
-
-all_but_micro_combined %>%
-  dplyr::mutate(across(.cols = all_of(common_vars), .fns = forcats::as_factor)) -> all_but_micro_combined
-```
 
 ### Macroroughness
 
@@ -292,7 +327,9 @@ calculates_correlation(all_but_micro_combined, Ra, `<2.5`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Ra, `<2.5`)
+plots_scatterplot(all_but_micro_combined, Ra, `<2.5`) + 
+  labs(y = "Number of adsorbed particles (<2.5)",
+       x = "Ra")
 ```
 
 #### 2.5 - 10
@@ -305,7 +342,9 @@ calculates_correlation(all_but_micro_combined, Ra, `2.5-10`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Ra, `2.5-10`)
+plots_scatterplot(all_but_micro_combined, Ra, `2.5-10`) +
+  labs(y = "Number of adsorbed particles (2.5 - 10)",
+       x = "Ra")
 ```
 
 #### 10 - 100
@@ -319,7 +358,9 @@ calculates_correlation(all_but_micro_combined, Ra, `10-100`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Ra, `10-100`)
+plots_scatterplot(all_but_micro_combined, Ra, `10-100`) +
+  labs(y = "Number of adsorbed particles (10 - 100)",
+       x = "Ra")
 ```
 
 #### Total
@@ -327,13 +368,15 @@ plots_scatterplot(all_but_micro_combined, Ra, `10-100`)
 ##### Correlation
 
 ```{r}
-calculates_correlation(all_but_micro_combined, Ra, total)
+calculates_correlation(all_but_micro_combined, Ra, total) 
 ```
 
 ##### Plot 
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Ra, total)
+plots_scatterplot(all_but_micro_combined, Ra, total) +
+  labs(y = "Total number of adsorbed particles",
+       x = "Ra")
 ```
 
 ### Wetability
@@ -349,7 +392,9 @@ calculates_correlation(all_but_micro_combined, Angle, `<2.5`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Angle, `<2.5`)
+plots_scatterplot(all_but_micro_combined, Angle, `<2.5`) +
+  labs(y = "Number of adsorbed particles (<2.5)",
+       x = "Angle")
 ```
 
 
@@ -364,7 +409,9 @@ calculates_correlation(all_but_micro_combined, Angle, `2.5-10`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Angle, `2.5-10`)
+plots_scatterplot(all_but_micro_combined, Angle, `2.5-10`) +
+  labs(y = "Number of adsorbed particles (2.5 - 10)",
+       x = "Angle")
 ```
 
 #### 10 - 100
@@ -378,7 +425,9 @@ calculates_correlation(all_but_micro_combined, Angle, `10-100`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Angle, `10-100`)
+plots_scatterplot(all_but_micro_combined, Angle, `10-100`) +
+  labs(y = "Number of adsorbed particles (10 - 100)",
+       x = "Angle")
 ```
 
 #### Total
@@ -390,7 +439,9 @@ calculates_correlation(all_but_micro_combined, Angle, total)
 ```
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Angle, total)
+plots_scatterplot(all_but_micro_combined, Angle, total) +
+  labs(y = "Total number of adsorbed particles",
+       x = "Angle")
 ```
 
 ### Perimeter
@@ -406,7 +457,9 @@ calculates_correlation(all_but_micro_combined, Perimeter, `<2.5`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Perimeter, `<2.5`)
+plots_scatterplot(all_but_micro_combined, Perimeter, `<2.5`) +
+  labs(y = "Number of adsorbed particles (<2.5)",
+       x = "Perimeter")
 ```
 
 #### 2.5 - 10
@@ -421,7 +474,9 @@ calculates_correlation(all_but_micro_combined, Perimeter, `2.5-10`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Perimeter, `2.5-10`)
+plots_scatterplot(all_but_micro_combined, Perimeter, `2.5-10`) +
+  labs(y = "Number of adsorbed particles (2.5 - 10)",
+       x = "Perimeter")
 ```
 
 
@@ -437,7 +492,9 @@ calculates_correlation(all_but_micro_combined, Perimeter, `10-100`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Perimeter, `10-100`)
+plots_scatterplot(all_but_micro_combined, Perimeter, `10-100`) +
+  labs(y = "Number of adsorbed particles (10 - 100)",
+       x = "Perimeter")
 ```
 
 
@@ -452,7 +509,9 @@ calculates_correlation(all_but_micro_combined, Perimeter, total)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, Perimeter, total)
+plots_scatterplot(all_but_micro_combined, Perimeter, total) +
+  labs(y = "Total number of adsorbed particles",
+       x = "Perimeter")
 ```
 
 ### UI
@@ -468,7 +527,9 @@ calculates_correlation(all_but_micro_combined, UI, `<2.5`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, UI, `<2.5`)
+plots_scatterplot(all_but_micro_combined, UI, `<2.5`) +
+  labs(y = "Number of adsorbed particles (<2.5)",
+       x = "UI")
 ```
 
 #### 2.5 - 10
@@ -482,7 +543,9 @@ calculates_correlation(all_but_micro_combined, UI, `2.5-10`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, UI, `2.5-10`)
+plots_scatterplot(all_but_micro_combined, UI, `2.5-10`) +
+  labs(y = "Number of adsorbed particles (2.5 - 10)",
+       x = "UI")
 ```
 
 #### 10 - 100
@@ -496,7 +559,9 @@ calculates_correlation(all_but_micro_combined, UI, `10-100`)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, UI, `10-100`)
+plots_scatterplot(all_but_micro_combined, UI, `10-100`) +
+  labs(y = "Number of adsorbed particles (10 - 100)",
+       x = "UI")
 ```
 
 
@@ -511,7 +576,9 @@ calculates_correlation(all_but_micro_combined, UI, total)
 ##### Plot
 
 ```{r}
-plots_scatterplot(all_but_micro_combined, UI, total)
+plots_scatterplot(all_but_micro_combined, UI, total) +
+  labs(y = "Total number of adsorbed particles",
+       x = "UI")
 ```
 
 
